@@ -19,3 +19,7 @@ Example:
 ```
 python pa-system.py --host=mumble.example.com --password=changeme --channel=PA
 ```
+
+### Running on a raspberry pi
+
+This was originally developed for use on a raspberry pi with the HifiBerry sound card installed. In order to allow multiple applications to play sound at the same time follow the instructions found here https://support.hifiberry.com/hc/en-us/articles/207397665-Mixing-different-audio-sources.
