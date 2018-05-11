@@ -1,9 +1,12 @@
 import sys
 import argparse
+import logging
 import pymumble.pymumble_py3 as pymumble
 from time import sleep
 import alsaaudio as sound
 import signal
+
+logger = logging.getLogger(__name__)
 
 class PaSystem:
 
@@ -23,14 +26,14 @@ class PaSystem:
 		self.mumble.start()
 		self.mumble.is_ready()
 
-		print("Mumble connected")
+		logger.info("Mumble connected")
 
 		self.mumble.users.myself.mute()
 		if (self.channel is not None):
-			print("Requesting channel " + self.channel)
+			logger.debug("Requesting channel " + self.channel)
 			ch = self.mumble.channels.find_by_name(self.channel)
 			if (ch is not None):
-				print("Switching to channel " + self.channel)
+				logger.debug("Switching to channel " + self.channel)
 				ch.move_in()
 
 		while(self.mumble.is_alive() and not self.stop):
@@ -38,7 +41,7 @@ class PaSystem:
 			self.mumble.set_receive_sound(True)
 			for user in self.mumble.users.values():
 				if (user.sound.is_sound()):
-					print("Got sound from user " + user["name"])
+					logger.debug("Got sound from user " + user["name"])
 					output = sound.PCM(sound.PCM_PLAYBACK)
 					output.setchannels(self.CHANNELS)
 					output.setrate(self.SAMPLE_RATE)
@@ -47,14 +50,14 @@ class PaSystem:
 						snd = user.sound.get_sound(self.FLOAT_RESOLUTION)
 						output.write(snd.pcm)
 
-					print("Done writing audio")
+					logger.debug("Done writing audio")
 					output.close()
 					
 
 		self.mumble.set_receive_sound(False)
 
 	def __stop(self):
-		print("Stop requested")
+		logger.info("Stop requested")
 		self.stop = True
 
 # #################################################################################
@@ -69,11 +72,18 @@ parser.add_argument("--port", dest="port", default=64738, help="Port number used
 parser.add_argument("--user", dest="user", default="pa", help="User to connect to Mumble as, defaults to \"pa\"")
 parser.add_argument("--password", dest="password", default=None, help="Password used to connect to Mumble if one is required, defaults to None")
 parser.add_argument("--channel", dest="channel", default=None, help="Channel to listen on, defaults to None")
+parser.add_argument("-v", dest="info", default=False, action="store_true", help="Enable verbose logging")
+parser.add_argument("-vv", dest="debug", default=False, action="store_true", help="Enable very verbose logging")
 
 args = parser.parse_args()
+
+if (args.info):
+	logging.basicConfig(level=logging.INFO)
+if (args.debug):
+	logging.basicConfig(level=logging.DEBUG)
 
 app = PaSystem(host=args.host, port=args.port, user=args.user, password=args.password, channel=args.channel)
 app.mainLoop()
 
-print("Mumble client stopped")
+logger.info("Mumble client stopped")
 sys.exit(0)
